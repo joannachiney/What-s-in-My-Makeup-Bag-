@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What's in My Makeup Bag?</title>
+  
+  <!-- Include Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      text-align: center;
+      background: url('https://i.imgur.com/7XksXse.jpeg') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      font-family: 'Lobster', cursive; /* Apply Lobster font */
+      color: #ff66b2; /* Change the title color to light pink */
+      margin-top: 30px;
+    }
+
+    #game {
+      margin: 20px auto;
+      max-width: 900px;
+    }
+
+    .item {
+      display: inline-block;
+      width: 100px;
+      height: 100px;
+      margin: 10px;
+      border: 3px solid #fff;
+      border-radius: 15px;
+      background-size: cover;
+      background-position: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .item:hover {
+      transform: scale(1.05);
+    }
+    .hidden {
+      display: none;
+    }
+    #message {
+      font-size: 22px;
+      color: #d63384;
+      margin: 20px;
+    }
+    #startButton {
+      padding: 12px 24px;
+      font-size: 20px;
+      background-color: #ff69b4;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    #startButton:hover {
+      background-color: #ff85c1;
+    }
+    #muteButton {
+      padding: 12px 24px;
+      font-size: 20px;
+      background-color: #ff69b4;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    #muteButton:hover {
+      background-color: #ff85c1;
+    }
+  </style>
+</head>
+<body>
+  <h1>What's in My Makeup Bag?</h1>
+  <div id="game">
+    <div id="makeupBag" class="hidden"></div>
+    <div id="choices" class="hidden"></div>
+    <div id="message"></div>
+    <button id="startButton">Start Game</button>
+    <button id="muteButton">Unmute Music</button> <!-- Mute button -->
+  </div>
+
+  <!-- Correct and wrong sound effects -->
+  <audio id="correctSound" src="https://files.catbox.moe/6mhnnv.mp3"></audio>
+  <audio id="wrongSound" src="https://files.catbox.moe/iknvx6.mp3"></audio>
+
+  <!-- Background music -->
+  <audio id="bgMusic" loop muted>
+    <source src="https://files.catbox.moe/weft9o.mp3" type="audio/mp3">
+  </audio>
+
+  <script>
+    const items = [
+      {name: 'Blush', image: 'https://i.imgur.com/CJOHm9c.jpg'},
+      {name: 'Mascara', image: 'https://i.imgur.com/Zs5Sedb.jpg'},
+      {name: 'Lipstick', image: 'https://i.imgur.com/2whjcN3.jpg'},
+      {name: 'Foundation', image: 'https://i.imgur.com/2h5ox8Y.jpg'},
+      {name: 'Eyeliner', image: 'https://i.imgur.com/Ey2FQkp.jpg'},
+      {name: 'Powder', image: 'https://i.imgur.com/zrkIWnI.jpg'},
+      {name: 'Highlighter', image: 'https://i.imgur.com/32KNpL5.jpg'},
+      {name: 'Eyeshadow', image: 'https://i.imgur.com/QT3O2wo.jpg'},
+      {name: 'Lip Gloss', image: 'https://i.imgur.com/qyCoi55.jpg'},
+      {name: 'Beauty Blender', image: 'https://i.imgur.com/XVv1jAO.jpg'},
+      {name: 'Eyelash Curler', image: 'https://i.imgur.com/uI8pqtT.jpeg'},
+      {name: 'Primer', image: 'https://i.imgur.com/DT2yOEq.jpg'},
+      {name: 'Concealer', image: 'https://i.imgur.com/LS7nlXr.jpg'},
+      {name: 'Lip Liner', image: 'https://i.imgur.com/sHyoUip.jpg'},
+      {name: 'Makeup Brush', image: 'https://i.imgur.com/4sD1wX3.jpeg'}
+    ];
+
+    let level = 1;
+    let maxLevel = 20;
+    let bagItems = [];
+    let correctSelections = 0;
+
+    const startButton = document.getElementById('startButton');
+    const makeupBag = document.getElementById('makeupBag');
+    const choices = document.getElementById('choices');
+    const message = document.getElementById('message');
+    const correctSound = document.getElementById('correctSound');
+    const wrongSound = document.getElementById('wrongSound');
+    const bgMusic = document.getElementById('bgMusic');
+    const muteButton = document.getElementById('muteButton');
+
+    // Start the background music when the start button is clicked
+    startButton.onclick = function() {
+      bgMusic.play();  // Start background music on start button click
+      bgMusic.muted = false; // Unmute music
+      muteButton.textContent = 'Mute Music'; // Update button text
+      level = 1;  // Reset level when game starts
+      startButton.style.display = 'none'; // Hide start button
+      startGame();  // Begin the game
+    };
+
+    // Toggle mute/unmute functionality
+    muteButton.onclick = function() {
+      if (bgMusic.muted) {
+        bgMusic.muted = false;
+        muteButton.textContent = 'Mute Music';
+      } else {
+        bgMusic.muted = true;
+        muteButton.textContent = 'Unmute Music';
+      }
+    };
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function showBagItems() {
+      makeupBag.innerHTML = '';
+      makeupBag.classList.remove('hidden');
+      bagItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.style.backgroundImage = `url(${item.image})`;
+        makeupBag.appendChild(div);
+      });
+
+      setTimeout(() => {
+        makeupBag.classList.add('hidden');
+        showChoices();
+      }, Math.max(2000, 4000 - level * 100));
+    }
+
+    function showChoices() {
+      choices.innerHTML = '';
+      choices.classList.remove('hidden');
+      message.textContent = `Which items were in the bag? (Level ${level})`;
+
+      const allItems = shuffle([...items]);
+      const filteredItems = allItems.filter(item => !bagItems.some(bagItem => bagItem.name === item.name));
+      const selectedItems = shuffle([...bagItems, ...filteredItems.slice(0, 8 + level - bagItems.length)]);
+
+      selectedItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.style.backgroundImage = `url(${item.image})`;
+        div.onclick = () => handleSelection(div, item.name);
+        div.setAttribute('data-name', item.name);
+        choices.appendChild(div);
+      });
+    }
+
+    function handleSelection(div, name) {
+      if (bagItems.find(item => item.name === name)) {
+        if (!div.classList.contains('selected')) {
+          div.style.borderColor = 'limegreen';
+          div.classList.add('selected');
+          correctSound.play();
+          correctSelections++;
+          if (correctSelections === bagItems.length) {
+            if (level >= maxLevel) {
+              message.textContent = '🎉 You completed all levels! You have a fabulous memory!';
+              startButton.textContent = 'Play Again';
+              startButton.style.display = 'inline-block';
+              return;
+            }
+            message.textContent = 'Correct! Next level...';
+            setTimeout(startGame, 2000);
+          }
+        }
+      } else {
+        div.style.borderColor = 'red';
+        wrongSound.play();
+        message.textContent = 'Oops! Try again.';
+      }
+    }
+
+    function startGame() {
+      correctSelections = 0;
+      choices.classList.add('hidden');
+      message.textContent = '';
+      bagItems = shuffle([...items]).slice(0, 2 + level);
+      level++;  // Increment the level after starting the game
+      showBagItems();
+    }
+  </script>
+</body>
+</html>
